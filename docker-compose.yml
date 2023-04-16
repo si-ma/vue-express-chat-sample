@@ -1,0 +1,57 @@
+version: "3"
+services:
+  frontend:
+    container_name: app_container
+    build: ./docker/frontend
+    ports:
+      - 5173:5173
+    volumes:
+      - ./frontend:/frontend
+    stdin_open: true
+    tty: true
+    #environment:
+      #TZ: Asia/Tokyo
+    #command: npm run dev
+    networks:                          #ネットワークを追加
+      - vue-express-mysql-networks
+
+  api:
+    container_name: api_container
+    build: ./docker/backend
+    ports:
+      - 3000:3000
+    volumes:
+      - ./backend:/api
+    tty: true
+    environment:
+      CHOKIDAR_USEPOLLING: 1
+    depends_on:
+      - db
+    #command: yarn nodemon
+    networks:                          #ネットワークを追加
+      - vue-express-mysql-networks
+
+  db:
+    container_name: db_container
+    build: ./docker/db
+    image: mysql:5.7
+    ports:
+      - 3306:3306
+    volumes:
+      - ./db/conf/my.cnf:/etc/mysql/conf.d/mysql.cnf
+      - ./db/init_db:/docker-entrypoint-initdb.d
+      - test_data:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    networks:                          #ネットワークを追加
+      - vue-express-mysql-networks
+
+networks:                              #ネットワークを追加
+  vue-express-mysql-networks:
+    driver: bridge
+
+volumes:
+  test_data:
